@@ -1,0 +1,8 @@
+version: 2
+
+seeds:
+  - name: products
+    description: "Schema for the products data"
+    columns:
+      - name: BARCODE
+        column_types: varchar

@@ -29,7 +29,7 @@ SELECT p.BRAND, SUM(t.FINAL_SALE) AS total_sales
 FROM transactions t
 JOIN users u ON t.USER_ID = u.ID
 JOIN products p ON t.BARCODE = p.BARCODE
-WHERE (strftime('%Y', 'now') - strftime('%Y', u.CREATED_DATE)) >= 0.5
+WHERE date(u.CREATED_DATE) <= date('now', '-6 months') 
 GROUP BY p.BRAND
 ORDER BY total_sales DESC
 LIMIT 5;
@@ -38,12 +38,17 @@ LIMIT 5;
 
 SELECT
     CASE
-        WHEN (strftime('%Y', 'now') - strftime('%Y', u.BIRTH_DATE)) BETWEEN 18 AND 25 THEN 'Gen Z'
-        WHEN (strftime('%Y', 'now') - strftime('%Y', u.BIRTH_DATE)) BETWEEN 26 AND 40 THEN 'Millennials'
-        WHEN (strftime('%Y', 'now') - strftime('%Y', u.BIRTH_DATE)) BETWEEN 41 AND 56 THEN 'Gen X'
+        WHEN (CAST(strftime('%Y', 'now') AS INTEGER) - CAST(strftime('%Y', u.BIRTH_DATE) AS INTEGER)) BETWEEN 18 AND 25 THEN 'Gen Z'
+        WHEN (CAST(strftime('%Y', 'now') AS INTEGER) - CAST(strftime('%Y', u.BIRTH_DATE) AS INTEGER)) BETWEEN 26 AND 40 THEN 'Millennials'
+        WHEN (CAST(strftime('%Y', 'now') AS INTEGER) - CAST(strftime('%Y', u.BIRTH_DATE) AS INTEGER)) BETWEEN 41 AND 56 THEN 'Gen X'
         ELSE 'Boomers'
     END AS generation,
-    SUM(CASE WHEN p.CATEGORY_1 = 'Health & Wellness' THEN t.FINAL_SALE ELSE 0 END) / SUM(t.FINAL_SALE) * 100 AS percentage_sales
+    CASE 
+        WHEN SUM(t.FINAL_SALE) > 0 THEN 
+            SUM(CASE WHEN p.CATEGORY_1 = 'Health & Wellness' THEN t.FINAL_SALE ELSE 0 END) * 100.0 / SUM(t.FINAL_SALE)
+        ELSE 
+            0  -- Avoid division by zero
+    END AS percentage_sales
 FROM transactions t
 JOIN users u ON t.USER_ID = u.ID
 JOIN products p ON t.BARCODE = p.BARCODE
